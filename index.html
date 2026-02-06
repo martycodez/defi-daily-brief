@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeFi Daily Brief</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #1a5f7a;
+            --primary-light: #2d7a9a;
+            --accent: #d4af37;
+            --bg: #fafafa;
+            --text: #1a1a1a;
+            --text-light: #4a4a4a;
+            --card: #ffffff;
+            --border: #e0e0e0;
+            --shadow: rgba(0, 0, 0, 0.08);
+            --badge-founder: #8b5cf6;
+            --badge-team: #3b82f6;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Source Sans 3', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 60px 24px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+            animation: fadeInDown 0.6s ease;
+        }
+        
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 3.5rem;
+            font-weight: 900;
+            color: var(--primary);
+            margin-bottom: 12px;
+            letter-spacing: -1px;
+        }
+        
+        .filters-container {
+            background: var(--card);
+            padding: 24px;
+            margin: 30px 0;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px var(--shadow);
+        }
+        
+        .filter-group {
+            margin-bottom: 20px;
+        }
+        
+        .filter-group:last-child {
+            margin-bottom: 0;
+        }
+        
+        .filter-label {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--primary);
+            margin-bottom: 12px;
+            display: block;
+        }
+        
+        .view-options {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .current-date-display {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid var(--border);
+            text-align: center;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+        
+        .filter-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        
+        .filter-chip {
+            background: var(--bg);
+            border: 2px solid var(--border);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+        
+        .filter-chip:hover {
+            background: var(--primary-light);
+            color: white;
+            border-color: var(--primary-light);
+        }
+        
+        .filter-chip.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        .clear-filters {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 16px;
+        }
+        
+        .clear-filters:hover {
+            background: #c09a2d;
+            transform: translateY(-2px);
+        }
+        
+        .section {
+            margin-bottom: 48px;
+            animation: fadeInUp 0.6s ease;
+        }
+        
+        .date-section {
+            margin-bottom: 60px;
+        }
+        
+        .date-header {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary-light);
+            margin-bottom: 32px;
+            padding: 16px 24px;
+            background: linear-gradient(135deg, var(--card) 0%, #f0f7fa 100%);
+            border-left: 4px solid var(--accent);
+            border-radius: 8px;
+        }
+        
+        h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+            border-bottom: 3px solid var(--accent);
+        }
+        
+        .org-group {
+            background: var(--card);
+            padding: 28px;
+            margin-bottom: 24px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px var(--shadow);
+            transition: all 0.3s ease;
+        }
+        
+        .org-group:hover {
+            box-shadow: 0 4px 16px var(--shadow);
+            transform: translateY(-2px);
+        }
+        
+        .org-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        
+        h3 {
+            font-family: 'Source Sans 3', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 0;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: white;
+        }
+        
+        .badge-founder {
+            background: var(--badge-founder);
+        }
+        
+        .badge-team {
+            background: var(--badge-team);
+        }
+        
+        .handle {
+            color: var(--text-light);
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+        
+        ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        li {
+            margin-bottom: 16px;
+            padding-left: 24px;
+            position: relative;
+            line-height: 1.8;
+            color: var(--text);
+            text-align: left;
+        }
+        
+        li::before {
+            content: '▪';
+            position: absolute;
+            left: 0;
+            color: var(--accent);
+            font-size: 1.2rem;
+        }
+        
+        a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        
+        a::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -2px;
+            left: 0;
+            background: var(--primary);
+            transition: width 0.3s ease;
+        }
+        
+        a:hover::after {
+            width: 100%;
+        }
+        
+        a:hover {
+            color: var(--primary-light);
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 60px;
+            background: var(--card);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px var(--shadow);
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 60px;
+            background: var(--card);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px var(--shadow);
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 80px;
+            padding: 32px;
+            color: var(--text-light);
+            font-size: 0.95rem;
+        }
+        
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+            
+            h2 {
+                font-size: 1.6rem;
+            }
+            
+            .date-header {
+                font-size: 1.4rem;
+                padding: 12px 16px;
+            }
+            
+            .container {
+                padding: 40px 16px;
+            }
+            
+            .org-group {
+                padding: 20px;
+            }
+            
+            .view-options {
+                gap: 8px;
+            }
+            
+            .filter-options {
+                gap: 8px;
+            }
+            
+            .filter-chip {
+                padding: 6px 12px;
+                font-size: 0.85rem;
+            }
+            
+            .current-date-display {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>DeFi Daily Brief</h1>
+        </header>
+
+        <div class="filters-container">
+            <div class="filter-group">
+                <label class="filter-label">Date View</label>
+                <div class="view-options">
+                    <div class="filter-chip active" onclick="setViewMode('yesterday')" data-view="yesterday">Yesterday</div>
+                    <div class="filter-chip" onclick="setViewMode('last7days')" data-view="last7days">Last 7 Days</div>
+                    <div class="filter-chip" onclick="setViewMode('thismonth')" data-view="thismonth">This Month</div>
+                </div>
+            </div>
+            
+            <div class="filter-group">
+                <label class="filter-label">Filter by Section</label>
+                <div class="filter-options" id="sectionFilters">
+                    <!-- Section filter chips will be populated here -->
+                </div>
+            </div>
+            
+            <div class="filter-group">
+                <label class="filter-label">Filter by Protocol</label>
+                <div class="filter-options" id="protocolFilters">
+                    <!-- Protocol filter chips will be populated here -->
+                </div>
+            </div>
+            
+            <button class="clear-filters" onclick="clearAllFilters()">Clear All Filters</button>
+            
+            <div class="current-date-display" id="currentDateDisplay">
+                <!-- Current viewing date will be displayed here -->
+            </div>
+        </div>
+
+        <div id="content" class="loading">
+            Loading briefs...
+        </div>
+
+        <footer>
+            <p>DeFi Daily Brief • Compiled from Twitter data</p>
+        </footer>
+    </div>
+
+    <script>
+        // Embedded JSON data
+        let briefsData = {"Feb 03, 2026": {"Major Developments": {"Aave": [{"text": "Published case study on Aave's role in scaling stablecoins - global stablecoin supply crossed $300B in 2025 with Aave as key growth rail", "link": "https://x.com/i/status/2018752166454759627"}, {"text": "Winding down Family iOS wallet while Family Accounts continue to power Aave App infrastructure", "link": "https://x.com/i/status/2018766256724447521"}, {"text": "Stablecoin float pushed past $500M+ demonstrating balance sheet depth and battle-tested stress performance", "link": "https://x.com/i/status/2018618259487203336"}], "Chainlink": [{"text": "Strategic partnership with Texas Blockchain Council to advance digital asset standards across Texas", "link": "https://x.com/i/status/2018750395632279576"}, {"text": "Highlighted 5 ways Chainlink supercharges growth for stablecoin issuers", "link": "https://x.com/i/status/2018672859560686055"}, {"text": "Making privacy programmable with confidential compute and private cross-chain execution for institutional adoption", "link": "https://x.com/i/status/2018520091059765335"}], "Cowswap": [{"text": "Integration with MetaMask to enable trading USDC for Ondo Finance tokenized assets with MEV-free execution", "link": "https://x.com/i/status/2018708147284677096"}, {"text": "Reduced fees on correlated asset pairs (including stablecoin-to-stablecoin) from 2bps to 0.3bps", "link": "https://x.com/i/status/2018671533485629659"}]}, "Founder Insights": {"Aave - @StaniKulechov (Founder)": [{"text": "Strong analysis highlights Aave V4 liquidation parameters and revenue impact optimization", "link": "https://x.com/i/status/2018750835312763218"}, {"text": "Aave's deepest liquidity pools create flywheel effect with stable float, deeper money markets, stronger credit loops", "link": "https://x.com/i/status/2018618259487203336"}], "Maple Finance - @syrupsid (Founder)": [{"text": "Standard Chartered warning of $500B bank deposit flight to stablecoins - capital going where it's treated best with onchain rails offering speed, transparency and yield", "link": "https://x.com/i/status/2018670811452740060"}, {"text": "Institutions want curated, reliable access to yield - discussing curated vs. modular credit models in DeFi", "link": "https://x.com/i/status/2018728919646532010"}], "Curve - @newmichwill (Founder)": [{"text": "Curve daily active users at ATH according to Token Terminal", "link": "https://x.com/i/status/2018827623753982228"}, {"text": "Discussion on DAO sovereignty: Should DAOs be incorporated or self-sovereign like Curve truly is?", "link": "https://x.com/i/status/2018637158106472733"}], "Uniswap - @haydenzadams (Founder)": [{"text": "Excited for L2 proving systems secured by L1 hardforks - was biggest complaint about L2-centric roadmap historically", "link": "https://x.com/i/status/2018739946706596309"}, {"text": "Called for increased code size limit on Ethereum L1 for DeFi development", "link": "https://x.com/i/status/2018831529338904633"}]}, "Team Member Insights": {"Chainlink - @ChainLinkGod (Team Member)": [{"text": "Institutions choosing Chainlink: \"Institutions realizing they don't need to reinvent the wheel when there is proven infrastructure\"", "link": "https://x.com/i/status/2018823564435357871"}, {"text": "Chainlink making privacy programmable with confidential compute unlocking institutional adoption", "link": "https://x.com/i/status/2018520091059765335"}]}, "DeFi Highlights": {"Pendle": [{"text": "YT long yields hitting 700%+ APY with extra boost from External Incentives - Pendle adds up to 40% extra $PENDLE on top of protocol rewards", "link": "https://x.com/i/status/2018618301967151361"}, {"text": "First protocol leverages Pendle's permissionless pool contracts to independently deploy market with custom UI - showcasing composability vision", "link": "https://x.com/i/status/2018500876193898570"}, {"text": "Hiring product researcher for data-driven initiatives", "link": "https://x.com/i/status/2018558182302593149"}], "Maple Finance": [{"text": "Maple continues strong inflows on Aave's Base instance: 100M cap filled, new cap set at 200M", "link": "https://x.com/i/status/2018691007307767906"}], "Sky Protocol": [{"text": "Q4 Update and 2026 Outlook released", "link": "https://x.com/i/status/2018756893813219356"}, {"text": "Rune Kek at NYSE discussing state of digital assets in U.S. and institutional stablecoin adoption", "link": "https://x.com/i/status/2018722707605799035"}], "Orca": [{"text": "NX8 index now live to trade & LP on Orca - captures leading L1 blockchains in single liquid asset", "link": "https://x.com/i/status/2018672301961863598"}, {"text": "Prioritizing direct communication with Solana traders, LPers and builders to shape future of Solana liquidity", "link": "https://x.com/i/status/2018689441469276476"}], "PancakeSwap": [{"text": "Weekly stats: Net CAKE mint -626k CAKE (-$946k), total product burns 777k CAKE ($1.17M)", "link": "https://x.com/i/status/2018640818740068517"}], "Spark": [{"text": "Chinese community call scheduled for February 5th to discuss latest financials, buybacks, emissions reduction, and institutional lending", "link": "https://x.com/i/status/2018672441338257614"}]}, "DEX Updates": {"Aerodrome": [{"text": "AI agents making Base more efficient: 6x capital efficiency on $BNKR, 15x on $CLANKER compared to competition", "link": "https://x.com/i/status/2018819482681291055"}, {"text": "Slipstream LP Rewards: up to 4,606% APY on USDC-CLAWD pair", "link": "https://x.com/i/status/2018742547695468880"}, {"text": "14% Flight School Lock Bonus for new veAERO locks over 2,500", "link": "https://x.com/i/status/2018712352066277656"}, {"text": "More volume than all other DEXs on Base with day 1 Coinbase distribution", "link": "https://x.com/i/status/2018776747354005919"}], "Uniswap": [{"text": "CCA (Continuous Clearing Auctions) now being built on by teams like Huddle01 for transparent onchain token distributions", "link": "https://x.com/i/status/2018823277351956673"}, {"text": "$RNBW CCA Auction officially live - liquidity bootstrapping and price discovery happening onchain", "link": "https://x.com/i/status/2018722976347062746"}]}}, "Feb 02, 2026": {"Major Developments": {"HyperLiquid": [{"text": "Introducing outcome trading (HIP-4) - fully collateralized contracts settling within fixed range for prediction markets and bounded options-like instruments", "link": "https://x.com/i/status/2018327360723202167"}, {"text": "Outcomes bring non-linearity, dated contracts, and alternative derivative trading without leverage or liquidations", "link": "https://x.com/i/status/2018327360723202167"}, {"text": "Currently testing on testnet, will deploy canonical markets denominated in USDH once complete", "link": "https://x.com/i/status/2018327360723202167"}, {"text": "New ATH: $1B in open interest and $4.8B in 24-hour volume on HIP-3 markets", "link": "https://x.com/i/status/2018227446320173431"}], "Chainlink": [{"text": "Highlighting $2.8B lost to cross-chain exploits", "link": "https://x.com/i/status/2018459841879322898"}, {"text": "Positioning as the only platform for institutional smart contracts at scale", "link": "https://x.com/i/status/2018333738858381575"}]}, "Founder Insights": {"Maple Finance - @syrupsid (Founder)": [{"text": "Maple Finance now #1 in yield-generating RWA by TVL, combining syrupUSDC and syrupUSDT products", "link": "https://x.com/i/status/2018380095233163298"}]}, "Team Member Insights": {"Fluid - @mardeni01 (Team Member)": [{"text": "Weekend crash proved another successful stress test: $0 bad debt, flawless liquidations, $3.3B weekly trading volume (#2 DEX on Ethereum with 22% market share), $260k in weekly revenue", "link": "https://x.com/i/status/2018288981646163970"}, {"text": "Fluid's liquidation system only liquidates minimum needed to restore health at 0.1-1% penalty vs competitors' 50% liquidations with 5-10% penalties", "link": "https://x.com/i/status/2018288981646163970"}], "Chainlink - @chrisbarrett (Team Member)": [{"text": "Chainlink secures 83.49% of Ethereum DeFi", "link": "https://x.com/i/status/2018383116893610304"}, {"text": "January highlights: Chainlink 24/5 U.S. Equities Streams launched across 40+ chains and new Swift trial for tokenized bonds settlement", "link": "https://x.com/i/status/2018435191753118197"}]}, "DeFi Highlights": {"Aave": [{"text": "January stats: $57.3B in deposits, $23.2B in active loans, $75.1M in fees", "link": "https://x.com/i/status/2018412674556579883"}, {"text": "Successfully handled weekend stress test on $50B+ lending markets, liquidating over $140M collateral across multiple networks fully automated without issues", "link": "https://x.com/i/status/2018326381680087452"}], "Pendle": [{"text": "Milestone: Pendle Print #100", "link": "https://x.com/i/status/2018264003617968155"}, {"text": "New AIM model cuts PENDLE emissions by ~30%", "link": "https://x.com/i/status/2018264003617968155"}, {"text": "New co-incentives module: $0.40 PENDLE on top of every $1 external incentive", "link": "https://x.com/i/status/2018264003617968155"}], "Aerodrome": [{"text": "Massive LP rewards: up to 5,442% APY on USDC-CLAWD pair", "link": "https://x.com/i/status/2018429905281941955"}, {"text": "856K AERO buyback ($160M+ total locked)", "link": "https://x.com/i/status/2018388637579379042"}], "Maple Finance": [{"text": "Now #1 in yield-generating RWA by TVL (combining syrupUSDC and syrupUSDT)", "link": "https://x.com/i/status/2018380095233163298"}, {"text": "Kamino's Maple Market hits $300M net deposits", "link": "https://x.com/i/status/2018355596483842455"}], "Sky Protocol": [{"text": "Bought back 130M SKY tokens in January using 8.5M USDS", "link": "https://x.com/i/status/2018351797623042496"}]}, "DEX Updates": {"Uniswap": [{"text": "Auctions now live on web app with continuous clearing auctions", "link": "https://x.com/i/status/2018343171504193925"}, {"text": "Pre-bidding for $RNBW token has begun", "link": "https://x.com/i/status/2018392229883056225"}]}}};
+        
+        let currentDate = null;
+        let activeFilters = {
+            sections: new Set(),
+            protocols: new Set()
+        };
+        let viewMode = 'yesterday'; // 'yesterday', 'last7days', 'thismonth'
+        let allDates = [];
+
+        // Define all available protocols (including ones not yet in data)
+        const allProtocols = [
+            'Aave',
+            'Aerodrome',
+            'Canton Network',
+            'Chainlink',
+            'Cowswap',
+            'Curve',
+            'Ethereum',
+            'Fluid',
+            'HyperLiquid',
+            'Infinex',
+            'Kamino',
+            'Maple Finance',
+            'Morpho',
+            'Orca',
+            'PancakeSwap',
+            'Pendle',
+            'Plasma',
+            'Prysm (Plasma Star)',
+            'Sky',
+            'Sky Protocol',
+            'Spark',
+            'Uniswap'
+        ];
+        
+        const sectionOrder = [
+            'Major Developments',
+            'Founder Insights',
+            'Team Member Insights',
+            'DeFi Highlights',
+            'DEX Updates'
+        ];
+
+        // Normalize protocol name (for Ethereum Foundation -> Ethereum)
+        function normalizeProtocol(protocolName) {
+            const cleaned = protocolName.split(' - ')[0].trim()
+                .replace('(Founder)', '').replace('(Team Member)', '').trim();
+            
+            // Map Ethereum Foundation to Ethereum
+            if (cleaned === 'Ethereum Foundation') {
+                return 'Ethereum';
+            }
+            
+            // Map Sky Protocol to Sky
+            if (cleaned === 'Sky Protocol') {
+                return 'Sky';
+            }
+            
+            return cleaned;
+        }
+
+        // Initialize with embedded data
+        async function loadData() {
+            try {
+                allDates = Object.keys(briefsData).sort().reverse();
+                currentDate = allDates[0]; // Most recent date
+                
+                renderFilters();
+                setViewMode('yesterday');
+            } catch (error) {
+                console.error('Error loading data:', error);
+                document.getElementById('content').innerHTML = `
+                    <div class="no-data">
+                        <h2>Error Loading Data</h2>
+                        <p>Unable to load daily brief data.</p>
+                    </div>
+                `;
+            }
+        }
+        
+        function getDateRange(mode) {
+            // For demo purposes with limited data, we'll simulate the ranges
+            const mostRecentDate = new Date(allDates[0]);
+            
+            switch(mode) {
+                case 'yesterday':
+                    // Get the second most recent date if available
+                    const yesterdayDate = allDates.length > 1 ? allDates[1] : allDates[0];
+                    return {
+                        dates: [yesterdayDate],
+                        label: `Yesterday - ${formatDate(yesterdayDate)}`
+                    };
+                    
+                case 'last7days':
+                    // Get all available dates (in our demo case, both dates)
+                    return {
+                        dates: allDates,
+                        label: 'Last 7 Days'
+                    };
+                    
+                case 'thismonth':
+                    // Get all dates from the current month
+                    const currentMonth = allDates[0].substring(0, 7); // YYYY-MM
+                    const monthDates = allDates.filter(d => d.startsWith(currentMonth));
+                    return {
+                        dates: monthDates,
+                        label: `This Month - ${new Date(currentMonth + '-01').toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`
+                    };
+                    
+                default:
+                    return {
+                        dates: [allDates[0]],
+                        label: formatDate(allDates[0])
+                    };
+            }
+        }
+        
+        function setViewMode(mode) {
+            viewMode = mode;
+            
+            // Update active view chip
+            document.querySelectorAll('[data-view]').forEach(chip => {
+                chip.classList.toggle('active', chip.dataset.view === mode);
+            });
+            
+            const dateRange = getDateRange(mode);
+            
+            // Update current date display
+            document.getElementById('currentDateDisplay').innerHTML = `
+                <strong>Viewing:</strong> ${dateRange.label}
+            `;
+            
+            // All modes now use aggregated view with date headers
+            renderAggregatedView(dateRange.dates, dateRange.label);
+        }
+        
+        function renderAggregatedView(dates, label) {
+            if (dates.length === 0) {
+                document.getElementById('content').innerHTML = `
+                    <div class="no-data">
+                        <h2>No Data Available</h2>
+                        <p>No tweets found in this time period.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            
+            // Show each day separately
+            dates.forEach(date => {
+                const briefData = briefsData[date];
+                if (!briefData) return;
+                
+                const dayContent = renderBriefContent(briefData, date);
+                if (dayContent) {
+                    html += dayContent;
+                }
+            });
+            
+            if (!html) {
+                html = `<div class="no-data">
+                    <h2>No Results</h2>
+                    <p>No tweets match your current filters in this time period.</p>
+                </div>`;
+            }
+            
+            document.getElementById('content').innerHTML = html;
+        }
+        
+        function renderBriefContent(briefData, dateStr = null) {
+            if (!briefData || Object.keys(briefData).length === 0) {
+                return '';
+            }
+
+            let html = '';
+            let hasContent = false;
+
+            // Add date header at the top if provided (for multi-day views)
+            if (dateStr) {
+                html += `<div class="date-section">
+                    <h2 class="date-header">${formatDate(dateStr)}</h2>`;
+            }
+
+            // Render sections in order
+            sectionOrder.forEach(sectionName => {
+                // Check section filter
+                if (activeFilters.sections.size > 0 && !activeFilters.sections.has(sectionName)) {
+                    return;
+                }
+                
+                if (briefData[sectionName] && Object.keys(briefData[sectionName]).length > 0) {
+                    let sectionHtml = '';
+                    let sectionHasContent = false;
+                    
+                    Object.entries(briefData[sectionName]).forEach(([org, tweets]) => {
+                        const normalizedProtocol = normalizeProtocol(org);
+                        
+                        // Check protocol filter
+                        if (activeFilters.protocols.size > 0 && !activeFilters.protocols.has(normalizedProtocol)) {
+                            return;
+                        }
+                        
+                        sectionHasContent = true;
+                        hasContent = true;
+                        
+                        // Extract role badge from organization name if present
+                        let orgName = org;
+                        let handle = '';
+                        let role = '';
+                        
+                        if (org.includes('(Founder)')) {
+                            role = 'Founder';
+                            orgName = org.replace(/\s*\(Founder\)/, '');
+                        } else if (org.includes('(Team Member)')) {
+                            role = 'Team Member';
+                            orgName = org.replace(/\s*\(Team Member\)/, '');
+                        }
+                        
+                        // Extract handle if present (starts with @)
+                        const parts = orgName.split(' - ');
+                        if (parts.length > 1) {
+                            orgName = parts[0];
+                            handle = parts[1];
+                        }
+                        
+                        sectionHtml += `<div class="org-group">
+                            <div class="org-header">
+                                <h3>${orgName}</h3>`;
+                        
+                        if (role === 'Founder') {
+                            sectionHtml += `<span class="badge badge-founder">Founder</span>`;
+                        } else if (role === 'Team Member') {
+                            sectionHtml += `<span class="badge badge-team">Team Member</span>`;
+                        }
+                        
+                        if (handle) {
+                            sectionHtml += `<span class="handle">${handle}</span>`;
+                        }
+                        
+                        sectionHtml += `</div><ul>`;
+                        
+                        tweets.forEach(tweet => {
+                            sectionHtml += `<li>${tweet.text}`;
+                            if (tweet.link) {
+                                sectionHtml += ` <a href="${tweet.link}" target="_blank">(View Tweet)</a>`;
+                            }
+                            sectionHtml += `</li>`;
+                        });
+                        
+                        sectionHtml += `</ul></div>`;
+                    });
+                    
+                    if (sectionHasContent) {
+                        html += `<div class="section">
+                            <h2>${sectionName}</h2>
+                            ${sectionHtml}
+                        </div>`;
+                    }
+                }
+            });
+
+            // Close date section if it was opened
+            if (dateStr) {
+                html += `</div>`;
+            }
+
+            return hasContent ? html : '';
+        }
+
+        function renderDateNavigation(dates) {
+            const nav = document.getElementById('dateNav');
+            nav.innerHTML = dates.map(date => {
+                const dateObj = new Date(date);
+                const formatted = dateObj.toLocaleDateString('en-US', { 
+                    weekday: 'short', 
+                    month: 'short', 
+                    day: 'numeric',
+                    year: 'numeric'
+                });
+                return `<button class="date-button ${date === currentDate ? 'active' : ''}" 
+                        data-date="${date}" onclick="switchDate('${date}')">
+                    ${formatted}
+                </button>`;
+            }).join('');
+        }
+        
+        function renderFilters() {
+            // Render section filters
+            const sectionFiltersDiv = document.getElementById('sectionFilters');
+            sectionFiltersDiv.innerHTML = sectionOrder.map(section => {
+                return `<div class="filter-chip" onclick="toggleSectionFilter('${section}')" data-section="${section}">
+                    ${section}
+                </div>`;
+            }).join('');
+            
+            // Render protocol filters (sorted alphabetically)
+            const protocolFiltersDiv = document.getElementById('protocolFilters');
+            protocolFiltersDiv.innerHTML = allProtocols.sort().map(protocol => {
+                return `<div class="filter-chip" onclick="toggleProtocolFilter('${protocol}')" data-protocol="${protocol}">
+                    ${protocol}
+                </div>`;
+            }).join('');
+        }
+        
+        function toggleSectionFilter(section) {
+            if (activeFilters.sections.has(section)) {
+                activeFilters.sections.delete(section);
+            } else {
+                activeFilters.sections.add(section);
+            }
+            
+            // Update UI
+            const chip = document.querySelector(`[data-section="${section}"]`);
+            chip.classList.toggle('active');
+            
+            // Re-render brief
+            renderBrief(currentDate);
+        }
+        
+        function toggleProtocolFilter(protocol) {
+            if (activeFilters.protocols.has(protocol)) {
+                activeFilters.protocols.delete(protocol);
+            } else {
+                activeFilters.protocols.add(protocol);
+            }
+            
+            // Update UI
+            const chip = document.querySelector(`[data-protocol="${protocol}"]`);
+            chip.classList.toggle('active');
+            
+            // Re-render brief
+            renderBrief(currentDate);
+        }
+        
+        function clearAllFilters() {
+            activeFilters.sections.clear();
+            activeFilters.protocols.clear();
+            
+            // Reset to yesterday view
+            viewMode = 'yesterday';
+            document.querySelectorAll('[data-view]').forEach(chip => {
+                chip.classList.toggle('active', chip.dataset.view === 'yesterday');
+            });
+            
+            // Update UI
+            document.querySelectorAll('.filter-chip').forEach(chip => {
+                if (!chip.dataset.view || chip.dataset.view !== 'yesterday') {
+                    chip.classList.remove('active');
+                }
+            });
+            
+            // Re-render brief
+            setViewMode('yesterday');
+        }
+
+        function switchDate(date) {
+            currentDate = date;
+            viewMode = 'single';
+            
+            // Update active button
+            document.querySelectorAll('.date-button').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.date === date);
+            });
+            
+            // Update view mode chips
+            document.querySelectorAll('[data-view]').forEach(chip => {
+                chip.classList.toggle('active', chip.dataset.view === 'single');
+            });
+            
+            renderBrief(date);
+        }
+
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+
+        function renderBrief(date) {
+            document.getElementById('currentDateDisplay').textContent = formatDate(date);
+            const briefData = briefsData[date];
+            
+            if (!briefData || Object.keys(briefData).length === 0) {
+                document.getElementById('content').innerHTML = `
+                    <div class="no-data">
+                        <h2>No Data Available</h2>
+                        <p>No tweets found for ${formatDate(date)}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const html = renderBriefContent(briefData);
+            
+            if (!html) {
+                document.getElementById('content').innerHTML = `
+                    <div class="no-data">
+                        <h2>No Results</h2>
+                        <p>No tweets match your current filters. Try adjusting your selection.</p>
+                    </div>
+                `;
+            } else {
+                document.getElementById('content').innerHTML = html;
+            }
+        }
+
+        // Initialize when page loads
+        window.addEventListener('DOMContentLoaded', function() {
+            loadData();
+        });
+    </script>
+</body>
+</html>
