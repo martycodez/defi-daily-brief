@@ -1,0 +1,1349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=5.0">
+<title>Clover Capital — Portfolio Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;overflow-x:hidden}
+body{background:#0B1120;color:#E2E8F0;font-family:'DM Sans',sans-serif;overflow-x:hidden;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;min-height:100vh}
+
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#334155;border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:#475569}
+
+.container{max-width:1280px;margin:0 auto;padding:32px 24px}
+
+/* Header */
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:32px;flex-wrap:wrap;gap:14px}
+.header-left{display:flex;align-items:center;gap:14px}
+.logo{width:40px;height:40px;background:linear-gradient(135deg,#4ADE80,#22D3EE);border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;color:#0B1120}
+.brand{font-size:22px;font-weight:700;color:#F1F5F9;letter-spacing:-0.5px}
+.brand span{color:#4ADE80}
+.status-pill{display:flex;align-items:center;gap:6px;background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.2);border-radius:20px;padding:6px 14px;font-size:11px;color:#4ADE80;font-family:'JetBrains Mono',monospace}
+.status-dot{width:6px;height:6px;background:#4ADE80;border-radius:50%;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+.last-update{font-size:11px;color:#596882;font-family:'JetBrains Mono',monospace}
+
+/* Tabs */
+.tabs{display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;padding-bottom:3px;flex-shrink:0;margin-bottom:24px}
+.tabs::-webkit-scrollbar{display:none}
+.tab-btn{background:rgba(30,41,59,0.5);border:1px solid rgba(148,163,184,0.1);color:#94A3B8;padding:10px 20px;border-radius:12px;font-size:13px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .2s ease;white-space:nowrap;flex-shrink:0}
+.tab-btn:hover{background:rgba(30,41,59,0.8);color:#CBD5E1}
+.tab-btn.active{background:rgba(74,222,128,0.1);border-color:rgba(74,222,128,0.3);color:#4ADE80}
+
+/* Cards */
+.card{background:rgba(15,23,42,0.6);border:1px solid rgba(148,163,184,0.08);border-radius:16px;padding:24px;backdrop-filter:blur(10px)}
+
+/* Hero Cards */
+.hero-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.hero-card{background:linear-gradient(135deg,rgba(15,23,42,0.8),rgba(30,41,59,0.4));border:1px solid rgba(148,163,184,0.08);border-radius:16px;padding:20px;position:relative;overflow:hidden}
+.hero-card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.hero-card:nth-child(1)::after{background:linear-gradient(90deg,#4ADE80,#22D3EE)}
+.hero-card:nth-child(2)::after{background:linear-gradient(90deg,#F7931A,#FCD34D)}
+.hero-card:nth-child(3)::after{background:linear-gradient(90deg,#8B5CF6,#A78BFA)}
+.hero-card:nth-child(4)::after{background:linear-gradient(90deg,#3B82F6,#60A5FA)}
+.hero-label{font-size:11px;color:#596882;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.hero-value{font-size:34px;font-weight:800;color:#F1F5F9;letter-spacing:-1px;line-height:1.1}
+.hero-sub{font-size:11px;color:#596882;margin-top:6px;font-family:'JetBrains Mono',monospace}
+.hero-delta{font-size:12px;font-weight:600;margin-top:4px}
+.delta-neg{color:#F87171}
+.delta-pos{color:#4ADE80}
+
+/* Metrics Grid */
+.metrics-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:24px}
+.metric-box{background:rgba(15,23,42,0.4);border:1px solid rgba(148,163,184,0.06);border-radius:12px;padding:14px}
+.metric-label{font-size:10px;color:#596882;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px}
+.metric-value{font-size:18px;font-weight:700;color:#F1F5F9}
+
+/* Content Grid */
+.content-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.content-grid.single{grid-template-columns:1fr}
+
+/* Section Headers */
+.section-title{font-size:16px;font-weight:700;color:#F1F5F9;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.section-title .icon{font-size:14px}
+
+/* Tables */
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;min-width:520px;font-size:13px}
+th{text-align:left;padding:10px 12px;color:#596882;font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid rgba(148,163,184,0.1);font-family:'JetBrains Mono',monospace}
+td{padding:10px 12px;border-bottom:1px solid rgba(148,163,184,0.05);color:#CBD5E1}
+tr:hover td{background:rgba(30,41,59,0.3)}
+.tbl-bold td{font-weight:600;color:#F1F5F9}
+
+/* ITD/QTD Split */
+.itd-qtd{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.itd-qtd>div:first-child{border-right:1px solid rgba(148,163,184,0.1);padding-right:24px}
+.itd-qtd>div:last-child{padding-left:24px}
+.itd-qtd .period-label{font-size:11px;color:#596882;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.itd-qtd .period-title{font-size:13px;font-weight:600;color:#F1F5F9;margin-bottom:16px}
+.return-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(148,163,184,0.05)}
+.return-row:last-child{border-bottom:none}
+.return-label{font-size:13px;color:#94A3B8}
+.return-value{font-size:14px;font-weight:600}
+
+/* Charts */
+.chart-container{position:relative;height:320px;margin-top:12px}
+.chart-legend{display:flex;gap:16px;margin-bottom:12px;flex-wrap:wrap}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:#94A3B8}
+.legend-swatch{width:18px;height:4px;border-radius:2px}
+
+/* Allocation bars */
+.alloc-bar-row{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.alloc-label{width:60px;font-size:12px;color:#94A3B8;font-family:'JetBrains Mono',monospace;flex-shrink:0}
+.alloc-bar-track{flex:1;height:28px;background:rgba(30,41,59,0.4);border-radius:6px;overflow:hidden;position:relative}
+.alloc-bar-fill{height:100%;border-radius:6px;display:flex;align-items:center;padding:0 10px;font-size:11px;font-weight:600;color:#0B1120;transition:width 0.6s ease}
+.alloc-pct{font-size:12px;color:#94A3B8;font-family:'JetBrains Mono',monospace;width:50px;text-align:right;flex-shrink:0}
+.alloc-amt{font-size:11px;color:#596882;font-family:'JetBrains Mono',monospace;width:100px;text-align:right;flex-shrink:0}
+
+/* Cost Basis Bars */
+.cost-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.cost-bar-label{width:100px;font-size:11px;color:#94A3B8;font-family:'JetBrains Mono',monospace;flex-shrink:0;text-align:right}
+.cost-bar-track{flex:1;height:24px;background:rgba(30,41,59,0.3);border-radius:4px;overflow:hidden}
+.cost-bar-fill{height:100%;border-radius:4px;display:flex;align-items:center;justify-content:flex-end;padding:0 8px;font-size:10px;font-weight:600;color:#fff}
+
+/* Tab content */
+.tab-content{display:none}
+.tab-content.active{display:block}
+
+/* Loading */
+.loading-overlay{position:fixed;inset:0;background:rgba(11,17,32,0.9);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1000;transition:opacity 0.4s ease}
+.loading-overlay.hidden{opacity:0;pointer-events:none}
+.loading-spinner{width:40px;height:40px;border:3px solid rgba(74,222,128,0.2);border-top-color:#4ADE80;border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{margin-top:16px;font-size:13px;color:#596882;font-family:'JetBrains Mono',monospace}
+
+/* Error banner */
+.error-banner{background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.2);border-radius:10px;padding:10px 16px;margin-bottom:16px;font-size:12px;color:#F87171;display:none;font-family:'JetBrains Mono',monospace}
+
+/* Commentary */
+.commentary{background:rgba(30,41,59,0.3);border-radius:10px;padding:16px;font-size:13px;color:#94A3B8;line-height:1.6;margin-top:12px}
+.commentary strong{color:#F1F5F9}
+.commentary .hl-green{color:#4ADE80;font-weight:700}
+.commentary .hl-orange{color:#F7931A;font-weight:700}
+
+/* Responsive */
+@media(max-width:1024px){
+  .hero-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:768px){
+  .header{flex-direction:column;align-items:stretch;gap:14px;margin-bottom:20px}
+  .tabs{gap:5px}
+  .tab-btn{padding:8px 14px;font-size:13px;border-radius:10px}
+  .card{padding:16px;border-radius:14px}
+  .hero-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+  .metrics-grid{grid-template-columns:repeat(2,1fr);gap:8px}
+  .content-grid{grid-template-columns:1fr}
+  .itd-qtd{grid-template-columns:1fr}
+  .itd-qtd>div:first-child{border-right:none;border-bottom:1px solid rgba(148,163,184,0.1);padding-bottom:24px;padding-right:0;margin-bottom:8px}
+  .itd-qtd>div:last-child{padding-left:0}
+  .cost-bar-label{width:80px;font-size:10px}
+  .container{padding-left:14px;padding-right:14px}
+  .chart-container{height:250px}
+  .hero-value{font-size:26px}
+}
+@media(max-width:480px){
+  .hero-grid{grid-template-columns:1fr 1fr;gap:8px}
+  .hero-value{font-size:22px}
+  .alloc-amt{display:none}
+}
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">Loading portfolio data...</div>
+</div>
+
+<div class="container">
+  <!-- Error Banner -->
+  <div class="error-banner" id="errorBanner"></div>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <div class="logo">C</div>
+      <div>
+        <div class="brand">Clover <span>Capital</span></div>
+        <div class="last-update" id="lastUpdate">Loading...</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+    <div class="status-pill">
+      <div class="status-dot"></div>
+      <span>LIVE</span>
+    </div>
+    <div id="countdown" style="font-size:10px;color:#596882;font-family:'JetBrains Mono',monospace">—</div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs" id="tabBar">
+    <button class="tab-btn active" data-tab="overview">Overview</button>
+    <button class="tab-btn" data-tab="performance">Performance</button>
+    <button class="tab-btn" data-tab="allocation">Allocation</button>
+    <button class="tab-btn" data-tab="tranches">Purchases</button>
+  </div>
+
+  <!-- HERO CARDS -->
+  <div class="hero-grid" id="heroCards">
+    <div class="hero-card">
+      <div class="hero-label">Total AUM</div>
+      <div class="hero-value" id="heroAUM">—</div>
+      <div class="hero-delta" id="heroAUMDelta"></div>
+    </div>
+    <div class="hero-card">
+      <div class="hero-label">BTC Holdings</div>
+      <div class="hero-value" id="heroBTC">—</div>
+      <div class="hero-sub" id="heroBTCPrice"></div>
+    </div>
+    <div class="hero-card">
+      <div class="hero-label">Inception to Date</div>
+      <div class="hero-value" id="heroITD">—</div>
+      <div class="hero-sub">Time-Weighted Return</div>
+    </div>
+    <div class="hero-card">
+      <div class="hero-label">ITD Alpha vs BTC</div>
+      <div class="hero-value" id="heroAlpha">—</div>
+      <div class="hero-sub">Fund − BTC Benchmark</div>
+    </div>
+  </div>
+
+  <!-- ==================== OVERVIEW TAB ==================== -->
+  <div class="tab-content active" id="tab-overview">
+
+    <!-- Key Metrics Bar -->
+    <div class="metrics-grid" id="metricsGrid">
+      <div class="metric-box"><div class="metric-label">Days Since Inception</div><div class="metric-value" id="metDays">—</div></div>
+      <div class="metric-box"><div class="metric-label">Max Drawdown</div><div class="metric-value" id="metDrawdown">—</div></div>
+      <div class="metric-box"><div class="metric-label">BTC Exposure</div><div class="metric-value" id="metBTCExposure">—</div></div>
+      <div class="metric-box"><div class="metric-label">Cash + Stables</div><div class="metric-value" id="metCash">—</div></div>
+    </div>
+
+    <!-- ITD / QTD Returns -->
+    <div class="card" style="margin-bottom:24px">
+      <div class="section-title">📊 Fund vs BTC (Time-Weighted Returns)</div>
+      <div class="itd-qtd">
+        <div>
+          <div class="period-label">Inception to Date</div>
+          <div class="return-row"><span class="return-label">Fund TWR</span><span class="return-value" id="itdFund">—</span></div>
+          <div class="return-row"><span class="return-label">BTC Benchmark</span><span class="return-value" id="itdBTC">—</span></div>
+          <div class="return-row"><span class="return-label" style="color:#4ADE80">Alpha (Fund − BTC)</span><span class="return-value" id="itdAlpha" style="color:#4ADE80">—</span></div>
+          <div class="return-row"><span class="return-label">ITD P&L ($)</span><span class="return-value" id="itdPnL">—</span></div>
+        </div>
+        <div>
+          <div class="period-label">Quarter to Date</div>
+          <div class="return-row"><span class="return-label">Fund TWR</span><span class="return-value" id="qtdFund">—</span></div>
+          <div class="return-row"><span class="return-label">BTC Benchmark</span><span class="return-value" id="qtdBTC">—</span></div>
+          <div class="return-row"><span class="return-label" style="color:#4ADE80">Alpha (Fund − BTC)</span><span class="return-value" id="qtdAlpha" style="color:#4ADE80">—</span></div>
+          <div class="return-row"><span class="return-label">QTD P&L ($)</span><span class="return-value" id="qtdPnL">—</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TWR Chart -->
+    <div class="card" style="margin-bottom:24px">
+      <div class="section-title">📈 Portfolio vs BTC (ITD Time-Weighted Returns)</div>
+      <div class="chart-legend">
+        <div class="legend-item"><div class="legend-swatch" style="background:#4ADE80"></div>Fund TWR</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#F7931A;border-top:1px dashed #F7931A"></div>BTC TWR</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#8B5CF6"></div>BTC Price</div>
+      </div>
+      <div id="twrTooltip" style="font-size:12px;color:#94A3B8;font-family:'JetBrains Mono',monospace;margin-bottom:8px"></div>
+      <div class="chart-container"><canvas id="twrChart"></canvas></div>
+    </div>
+
+    <!-- Commentary -->
+    <div class="card" style="margin-bottom:24px">
+      <div class="section-title">💡 Portfolio Commentary</div>
+      <div class="commentary" id="commentary">Loading commentary...</div>
+    </div>
+
+    <!-- Drawdown Chart -->
+    <div class="card">
+      <div class="section-title">📉 Drawdown from Peak</div>
+      <div class="chart-container"><canvas id="drawdownChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ==================== PERFORMANCE TAB ==================== -->
+  <div class="tab-content" id="tab-performance">
+    <!-- MWR Table -->
+    <div class="card" style="margin-bottom:24px">
+      <div class="section-title">💰 Fund vs BTC (Money-Weighted Returns)</div>
+      <div class="tbl-wrap">
+        <table id="mwrTable">
+          <thead><tr><th>Component</th><th>QTD PnL ($)</th><th>QTD Return (%)</th><th>ITD PnL ($)</th><th>ITD Return (%)</th></tr></thead>
+          <tbody id="mwrBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Key Metrics Detail -->
+    <div class="card" style="margin-bottom:24px">
+      <div class="section-title">📋 Key Metrics</div>
+      <div id="keyMetricsDetail" style="display:grid;grid-template-columns:1fr 1fr;gap:10px"></div>
+    </div>
+
+    <!-- BTC TWR Table -->
+    <div class="card">
+      <div class="section-title">₿ BTC Benchmark (Time-Weighted Returns)</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Metric</th><th>QTD PnL ($)</th><th>QTD Return (%)</th><th>ITD PnL ($)</th><th>ITD Return (%)</th></tr></thead>
+          <tbody id="btcTwrBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== ALLOCATION TAB ==================== -->
+  <div class="tab-content" id="tab-allocation">
+    <div class="content-grid">
+      <!-- Allocation Bars -->
+      <div class="card">
+        <div class="section-title">🏦 Asset Allocation</div>
+        <div id="allocBars"></div>
+      </div>
+      <!-- Donut placeholder replaced with bars -->
+      <div class="card">
+        <div class="section-title">📊 Allocation Breakdown</div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Asset</th><th>Amount</th><th>Price</th><th>AUM</th><th>%</th></tr></thead>
+            <tbody id="allocTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Venue Breakdown -->
+    <div class="card" style="margin-top:16px">
+      <div class="section-title">🏛️ Asset Breakdown by Venue</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Asset</th><th>Venue</th><th>Amount</th><th>Price</th><th>Value</th></tr></thead>
+          <tbody id="venueTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== PURCHASES TAB ==================== -->
+  <div class="tab-content" id="tab-tranches">
+    <!-- Cost Basis -->
+    <div class="card" style="margin-bottom:24px">
+      <div class="section-title">💎 BTC Purchase Cost Basis</div>
+      <div id="costBars"></div>
+      <div style="margin-top:12px;display:flex;gap:16px;font-size:11px;font-family:'JetBrains Mono',monospace">
+        <div style="display:flex;align-items:center;gap:6px"><div style="width:12px;height:12px;background:#F7931A;border-radius:2px"></div><span style="color:#94A3B8">Avg Cost: <span id="avgCostLabel" style="color:#F1F5F9">—</span></span></div>
+        <div style="display:flex;align-items:center;gap:6px"><div style="width:12px;height:3px;background:#4ADE80;border-radius:2px"></div><span style="color:#94A3B8">BTC Price: <span id="btcPriceLabel" style="color:#F1F5F9">—</span></span></div>
+      </div>
+    </div>
+
+    <!-- Purchases Table -->
+    <div class="card" style="margin-bottom:24px">
+      <div class="section-title">📝 Purchase History</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Trade</th><th>Qty (BTC)</th><th>Avg Price</th><th>Date</th><th>Value</th></tr></thead>
+          <tbody id="purchaseTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Inflows Table -->
+    <div class="card" style="margin-bottom:24px">
+      <div class="section-title">💵 Capital Inflows</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Stakeholder</th><th>Person</th><th>Asset</th><th>Quantity</th><th>Value</th><th>Date</th></tr></thead>
+          <tbody id="inflowsTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Holdings Chart -->
+    <div class="card">
+      <div class="section-title">📈 BTC Holdings & Avg Cost Over Time</div>
+      <div class="chart-legend">
+        <div class="legend-item"><div class="legend-swatch" style="background:#4ADE80"></div>BTC Holdings</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#F7931A"></div>Avg Cost</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#8B5CF6"></div>BTC Price</div>
+      </div>
+      <div class="chart-container"><canvas id="holdingsChart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════════════════════
+const SHEET_ID = '1QiW-1REapN-UD76xTf5ne4P-J6cWvMPJuuVqaYATFk0';
+const PUBLISH_ID = '2PACX-1vRwRHNmvnfYRYB3LRuUpLd2pt8R-RSSYYqU2DZ_QUoNRzFW0NmzZ2OsICbxX1xYc9l4ChniUmdwhDbF';
+const TABS = {
+  dashboard: 163729112,
+  perfSummary: 828103600,
+  returnsDaily: 1053773100,
+  purchases: 1222270502,
+  historicalPrices: 1760753841
+};
+const REFRESH_INTERVAL = 60000; // 60 seconds
+const INCEPTION_DATE = '2025-12-12';
+const INCEPTION_AUM = 33770670.78;
+const INCEPTION_BTC_PRICE = 90287.49;
+
+// ═══════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════
+let lastGoodData = null;
+let charts = {};
+let refreshTimer = null;
+
+// ═══════════════════════════════════════════════════════════
+// CSV FETCHING
+// ═══════════════════════════════════════════════════════════
+function csvUrl(gid) {
+  return `https://docs.google.com/spreadsheets/d/e/${PUBLISH_ID}/pub?gid=${gid}&single=true&output=csv&_t=${Date.now()}`;
+}
+
+async function fetchCSV(gid) {
+  const resp = await fetch(csvUrl(gid), {cache: 'no-store'});
+  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+  const text = await resp.text();
+  if (!text || text.length < 10 || text.includes('<!DOCTYPE')) throw new Error('Got HTML instead of CSV for gid ' + gid);
+  return Papa.parse(text, { header: false, skipEmptyLines: true }).data;
+}
+
+// ═══════════════════════════════════════════════════════════
+// PARSING HELPERS
+// ═══════════════════════════════════════════════════════════
+function parseNum(s) {
+  if (!s || s === '-' || s === '') return null;
+  return parseFloat(String(s).replace(/[$,%()]/g, '').replace(/\s/g, ''));
+}
+function parsePct(s) {
+  if (!s || s === '-' || s === '') return null;
+  let n = parseFloat(String(s).replace(/[%$,+]/g, '').replace(/[()]/g, m => m === '(' ? '-' : ''));
+  // If it looks like it was already a percentage (e.g., -23.43%), return as decimal
+  if (String(s).includes('%')) return n / 100;
+  return n;
+}
+function parseDollar(s) {
+  if (!s || s === '-' || s === '') return null;
+  let str = String(s).replace(/[$,\s]/g, '');
+  if (str.startsWith('(') && str.endsWith(')')) str = '-' + str.slice(1, -1);
+  return parseFloat(str);
+}
+
+// ═══════════════════════════════════════════════════════════
+// FORMATTING
+// ═══════════════════════════════════════════════════════════
+function fmtDollar(n, compact) {
+  if (n == null || isNaN(n)) return '—';
+  if (compact && Math.abs(n) >= 1e6) return '$' + (n / 1e6).toFixed(2) + 'M';
+  if (compact && Math.abs(n) >= 1e3) return '$' + (n / 1e3).toFixed(1) + 'K';
+  return n < 0 
+    ? '-$' + Math.abs(n).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2})
+    : '$' + n.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+function fmtPct(n, decimals=2) {
+  if (n == null || isNaN(n)) return '—';
+  return (n * 100).toFixed(decimals) + '%';
+}
+function fmtPctRaw(n, decimals=2) {
+  // n is already a percentage number like -19.94
+  if (n == null || isNaN(n)) return '—';
+  return n.toFixed(decimals) + '%';
+}
+function fmtNum(n, decimals=2) {
+  if (n == null || isNaN(n)) return '—';
+  return n.toLocaleString('en-US', {minimumFractionDigits:decimals, maximumFractionDigits:decimals});
+}
+function colorPct(el, val) {
+  if (val == null) return;
+  el.style.color = val >= 0 ? '#4ADE80' : '#F87171';
+}
+
+// ═══════════════════════════════════════════════════════════
+// DATA PARSING FROM SHEETS
+// ═══════════════════════════════════════════════════════════
+
+function parseDashboard(rows) {
+  // Row indices are 0-based; spreadsheet row 2 = index 1
+  const data = {};
+  
+  // Row 2: Today's Date (B2=label, C2=date)
+  data.todayDate = rows[1]?.[2] || '';
+  
+  // Row 5: AUM (B5), BTC Price (E5), BTC Holdings (H5)
+  data.aum = parseDollar(rows[4]?.[1]);
+  data.btcPrice = parseDollar(rows[4]?.[4]);
+  data.btcHoldings = parseNum(rows[4]?.[7]);
+  
+  // Key metrics (L column area)
+  // Row 6: BTC Avg Cost (L6 label, N6 value) - actually cols L,M,N = indices 11,12,13 -> label in L, value in N
+  data.btcAvgCost = parseDollar(rows[5]?.[14]); // O6
+  data.btcAvgPurchasePrice = parseDollar(rows[6]?.[14]); // O7
+  data.twoPointFiveAUM = parseDollar(rows[7]?.[14]); // O8
+  data.mwrITDFund = parsePct(rows[8]?.[14]); // O9
+  
+  // TWR from dashboard - rows 11-17 in K-P area
+  // ITD TWR: Fund=O11, BTC=O12, Alpha=O13
+  data.itdTWRFund = parsePct(rows[10]?.[14]);
+  data.itdTWRBTC = parsePct(rows[11]?.[14]);
+  data.itdAlpha = parsePct(rows[12]?.[14]);
+  // QTD TWR: Fund=O15, BTC=O16, Alpha=O17
+  data.qtdTWRFund = parsePct(rows[14]?.[14]);
+  data.qtdTWRBTC = parsePct(rows[15]?.[14]);
+  data.qtdAlpha = parsePct(rows[16]?.[14]);
+  
+  // MWR table (rows 11-16, cols B-I)
+  // Row 11: Fund, Row 12: BTC, Row 13: WBTC, Row 14: USDC, Row 15: Cash, Row 16: ETH
+  data.mwrRows = [];
+  for (let i = 10; i <= 15; i++) {
+    data.mwrRows.push({
+      label: rows[i]?.[1] || '',
+      qtdPnl: parseDollar(rows[i]?.[2]),
+      qtdRet: parsePct(rows[i]?.[4]),
+      itdPnl: parseDollar(rows[i]?.[6]),
+      itdRet: parsePct(rows[i]?.[8])
+    });
+  }
+  
+  // BTC TWR row (row 20)
+  data.btcTWR = {
+    label: rows[19]?.[1] || 'BTC (ALL TWR)',
+    qtdPnl: parseDollar(rows[19]?.[2]),
+    qtdRet: parsePct(rows[19]?.[4]),
+    itdPnl: parseDollar(rows[19]?.[6]),
+    itdRet: parsePct(rows[19]?.[8])
+  };
+  
+  // Asset Allocation (rows 24-28, cols B-I)
+  data.assets = [];
+  for (let i = 23; i <= 27; i++) {
+    const asset = rows[i]?.[1];
+    if (!asset) continue;
+    data.assets.push({
+      asset: asset,
+      amount: parseNum(rows[i]?.[2]),
+      price: parseDollar(rows[i]?.[4]),
+      aum: parseDollar(rows[i]?.[6]),
+      pct: parseNum(rows[i]?.[8]?.replace('%','')) / 100
+    });
+  }
+  
+  // Venue Breakdown (rows 32-45)
+  data.venues = [];
+  let currentAsset = '';
+  for (let i = 31; i <= 44; i++) {
+    const row = rows[i];
+    if (!row) continue;
+    const assetCol = row[1]?.trim();
+    const venueCol = row[2]?.trim();
+    if (assetCol && assetCol !== '') currentAsset = assetCol;
+    if (venueCol && venueCol !== '') {
+      data.venues.push({
+        asset: currentAsset,
+        venue: venueCol,
+        amount: row[4] || '',
+        price: row[6] || '',
+        value: row[8] || ''
+      });
+    } else if (assetCol) {
+      // Summary row for asset
+      data.venues.push({
+        asset: currentAsset,
+        venue: '(Total)',
+        amount: row[4] || '',
+        price: row[6] || '',
+        value: row[8] || '',
+        isSummary: true
+      });
+    }
+  }
+  
+  return data;
+}
+
+function parsePerfSummary(rows) {
+  const data = {};
+  // Row 4: Inception Date=C4, Current Date=E4
+  data.inceptionDate = rows[3]?.[2];
+  data.currentDate = rows[3]?.[4];
+  // Row 5: Quarter Start=C5, Days Since Inception=E5
+  data.quarterStart = rows[4]?.[2];
+  data.daysSinceInception = parseNum(rows[4]?.[4]);
+  
+  // ITD: Row 9 (index 8): Return (C=Fund, D=BTC, E=Alpha)
+  data.itdFundTWR = parsePct(rows[8]?.[2]);
+  data.itdBTCTWR = parsePct(rows[8]?.[3]);
+  data.itdAlpha = parsePct(rows[8]?.[4]);
+  // Row 13 (index 12): Inception BTC Price=D
+  data.inceptionBTCPrice = parseDollar(rows[12]?.[3]);
+  // Row 14 (index 13): Current BTC Price=D
+  data.currentBTCPrice = parseDollar(rows[13]?.[3]);
+  // Row 15 (index 14): P&L ($): C=Fund, D=BTC, E=Alpha
+  data.itdPnLFund = parseDollar(rows[14]?.[2]);
+  data.itdPnLBTC = parseDollar(rows[14]?.[3]);
+  data.itdPnLAlpha = parseDollar(rows[14]?.[4]);
+  
+  // QTD: Row 19 (index 18): Return (C=Fund, D=BTC, E=Alpha)
+  data.qtdFundTWR = parsePct(rows[18]?.[2]);
+  data.qtdBTCTWR = parsePct(rows[18]?.[3]);
+  data.qtdAlpha = parsePct(rows[18]?.[4]);
+  // Row 22 (index 21): Dec 31 BTC Price=D
+  data.dec31BTCPrice = parseDollar(rows[21]?.[3]);
+  // Row 23 (index 22): QTD P&L ($)
+  data.qtdPnLFund = parseDollar(rows[22]?.[2]);
+  data.qtdPnLBTC = parseDollar(rows[22]?.[3]);
+  data.qtdPnLAlpha = parseDollar(rows[22]?.[4]);
+  
+  // Key Metrics: Row 26 (index 25) onwards
+  data.currentAUM = parseDollar(rows[25]?.[2]);
+  data.totalCapitalInvested = parseDollar(rows[26]?.[2]);
+  data.totalPnL = parseDollar(rows[27]?.[2]);
+  data.btcHoldings = parseNum(rows[28]?.[2]);
+  data.currentBTCPriceKM = parseDollar(rows[29]?.[3]);
+  
+  return data;
+}
+
+function parseReturnsDaily(rows) {
+  // Headers are in row 3 (index 2), data starts from row 4 (index 3)
+  const data = [];
+  for (let i = 3; i < rows.length; i++) {
+    const row = rows[i];
+    if (!row || !row[0]) break;
+    const date = row[0];
+    const dailyTWR = parseNum(row[4]?.replace('%',''));   // Col E: Daily TWR
+    const cumTWR = parseNum(row[5]?.replace('%',''));      // Col F: Cumulative TWR
+    const portfolioValue = parseDollar(row[6]);             // Col G: Portfolio Value
+    const totalGL = parseDollar(row[7]);                    // Col H: Total Gain/Loss
+    const btcHoldings = parseNum(row[9]);                   // Col J (index 9): BTC Holdings
+    const btcPrice = parseDollar(row[10]);                  // Col K: Asset Price  
+    const btcMarketValue = parseDollar(row[12]);            // Col M: BTC Market Value
+    
+    if (cumTWR == null && dailyTWR == null) continue; // skip empty future rows
+    
+    data.push({ date, dailyTWR, cumTWR, portfolioValue, totalGL, btcHoldings, btcPrice, btcMarketValue });
+  }
+  return data;
+}
+
+function parsePurchases(rows) {
+  // Purchases: rows 4-10 (indices 3-9), cols B-I
+  const purchases = [];
+  for (let i = 3; i <= 20; i++) {
+    const row = rows[i];
+    if (!row || !row[1]) break;
+    purchases.push({
+      token: row[1],
+      venue: row[2],
+      description: row[3],
+      orderDate: row[4],
+      fillDate: row[5],
+      qty: parseNum(row[6]),
+      basis: parseDollar(row[7]),
+      value: parseDollar(row[8])
+    });
+  }
+  
+  // Inflows: rows 4-10, cols K-Q
+  const inflows = [];
+  for (let i = 3; i <= 20; i++) {
+    const row = rows[i];
+    if (!row || !row[10]) break;
+    inflows.push({
+      stakeholder: row[10],
+      person: row[11],
+      asset: row[12],
+      qty: row[13],
+      basis: row[14],
+      value: row[15],
+      date: row[16]
+    });
+  }
+  
+  // Stats: rows 3-11, cols S-T
+  const stats = {};
+  for (let i = 2; i <= 12; i++) {
+    const row = rows[i];
+    if (row && row[18]) {
+      stats[row[18].trim()] = row[19];
+    }
+  }
+  
+  return { purchases, inflows, stats };
+}
+
+// ═══════════════════════════════════════════════════════════
+// RENDER FUNCTIONS
+// ═══════════════════════════════════════════════════════════
+
+function renderHero(dash, perf) {
+  // AUM
+  const aum = perf?.currentAUM || dash.aum;
+  document.getElementById('heroAUM').textContent = fmtDollar(aum, true);
+  const aumDelta = ((aum - INCEPTION_AUM) / INCEPTION_AUM * 100);
+  const deltaEl = document.getElementById('heroAUMDelta');
+  deltaEl.textContent = `${aumDelta >= 0 ? '+' : ''}${aumDelta.toFixed(1)}% from ${fmtDollar(INCEPTION_AUM, true)}`;
+  deltaEl.className = 'hero-delta ' + (aumDelta >= 0 ? 'delta-pos' : 'delta-neg');
+  
+  // BTC Holdings
+  document.getElementById('heroBTC').textContent = fmtNum(dash.btcHoldings);
+  document.getElementById('heroBTCPrice').textContent = `BTC Price: ${fmtDollar(dash.btcPrice)}`;
+  
+  // ITD TWR
+  const itdVal = perf?.itdFundTWR ?? dash.itdTWRFund;
+  const heroITD = document.getElementById('heroITD');
+  heroITD.textContent = fmtPct(itdVal);
+  colorPct(heroITD, itdVal);
+  
+  // Alpha
+  const alphaVal = perf?.itdAlpha ?? dash.itdAlpha;
+  const heroAlpha = document.getElementById('heroAlpha');
+  heroAlpha.textContent = (alphaVal >= 0 ? '+' : '') + fmtPct(alphaVal);
+  colorPct(heroAlpha, alphaVal);
+}
+
+function renderMetrics(dash, perf, returnsDaily) {
+  // Days
+  document.getElementById('metDays').textContent = perf?.daysSinceInception || '—';
+  
+  // Max Drawdown - compute from returns daily
+  if (returnsDaily && returnsDaily.length > 0) {
+    let peak = 1;
+    let maxDD = 0;
+    for (const d of returnsDaily) {
+      const cumVal = 1 + (d.cumTWR || 0) / 100;
+      if (cumVal > peak) peak = cumVal;
+      const dd = (cumVal - peak) / peak;
+      if (dd < maxDD) maxDD = dd;
+    }
+    document.getElementById('metDrawdown').textContent = fmtPctRaw(maxDD * 100);
+    document.getElementById('metDrawdown').style.color = '#F87171';
+  }
+  
+  // BTC Exposure
+  const btcAssets = dash.assets?.filter(a => a.asset === 'BTC' || a.asset === 'WBTC') || [];
+  const btcExposure = btcAssets.reduce((s, a) => s + (a.pct || 0), 0);
+  document.getElementById('metBTCExposure').textContent = fmtPctRaw(btcExposure * 100);
+  document.getElementById('metBTCExposure').style.color = '#F7931A';
+  
+  // Cash + Stables
+  const cashAssets = dash.assets?.filter(a => a.asset === 'USDC' || a.asset === 'Cash') || [];
+  const cashPct = cashAssets.reduce((s, a) => s + (a.pct || 0), 0);
+  document.getElementById('metCash').textContent = fmtPctRaw(cashPct * 100);
+  document.getElementById('metCash').style.color = '#22D3EE';
+}
+
+function renderITDQTD(dash, perf) {
+  // Prefer Performance Summary tab values since they use proper TWR formulas
+  const setVal = (id, val, isPct = true) => {
+    const el = document.getElementById(id);
+    if (isPct) {
+      el.textContent = fmtPct(val);
+      colorPct(el, val);
+    } else {
+      el.textContent = fmtDollar(val);
+      colorPct(el, val);
+    }
+  };
+  
+  setVal('itdFund', perf?.itdFundTWR ?? dash.itdTWRFund);
+  setVal('itdBTC', perf?.itdBTCTWR ?? dash.itdTWRBTC);
+  setVal('itdAlpha', perf?.itdAlpha ?? dash.itdAlpha);
+  setVal('itdPnL', perf?.itdPnLFund ?? null, false);
+  
+  setVal('qtdFund', perf?.qtdFundTWR ?? dash.qtdTWRFund);
+  setVal('qtdBTC', perf?.qtdBTCTWR ?? dash.qtdTWRBTC);
+  setVal('qtdAlpha', perf?.qtdAlpha ?? dash.qtdAlpha);
+  setVal('qtdPnL', perf?.qtdPnLFund ?? null, false);
+  
+  // Force alpha green
+  ['itdAlpha','qtdAlpha'].forEach(id => {
+    const el = document.getElementById(id);
+    const v = id === 'itdAlpha' ? (perf?.itdAlpha ?? dash.itdAlpha) : (perf?.qtdAlpha ?? dash.qtdAlpha);
+    if (v != null && v > 0) el.style.color = '#4ADE80';
+  });
+}
+
+function renderMWR(dash) {
+  const tbody = document.getElementById('mwrBody');
+  tbody.innerHTML = '';
+  dash.mwrRows.forEach((r, i) => {
+    if (!r.label) return;
+    const tr = document.createElement('tr');
+    if (i === 0) tr.className = 'tbl-bold';
+    tr.innerHTML = `
+      <td>${r.label}</td>
+      <td style="color:${(r.qtdPnl||0) >= 0 ? '#4ADE80' : '#F87171'}">${fmtDollar(r.qtdPnl)}</td>
+      <td style="color:${(r.qtdRet||0) >= 0 ? '#4ADE80' : '#F87171'}">${fmtPct(r.qtdRet)}</td>
+      <td style="color:${(r.itdPnl||0) >= 0 ? '#4ADE80' : '#F87171'}">${fmtDollar(r.itdPnl)}</td>
+      <td style="color:${(r.itdRet||0) >= 0 ? '#4ADE80' : '#F87171'}">${fmtPct(r.itdRet)}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderBTCTWR(dash) {
+  const tbody = document.getElementById('btcTwrBody');
+  tbody.innerHTML = '';
+  const r = dash.btcTWR;
+  const tr = document.createElement('tr');
+  tr.className = 'tbl-bold';
+  tr.innerHTML = `
+    <td>${r.label}</td>
+    <td style="color:${(r.qtdPnl||0) >= 0 ? '#4ADE80' : '#F87171'}">${fmtDollar(r.qtdPnl)}</td>
+    <td style="color:${(r.qtdRet||0) >= 0 ? '#4ADE80' : '#F87171'}">${fmtPct(r.qtdRet)}</td>
+    <td style="color:${(r.itdPnl||0) >= 0 ? '#4ADE80' : '#F87171'}">${fmtDollar(r.itdPnl)}</td>
+    <td style="color:${(r.itdRet||0) >= 0 ? '#4ADE80' : '#F87171'}">${fmtPct(r.itdRet)}</td>
+  `;
+  tbody.appendChild(tr);
+}
+
+function renderKeyMetrics(dash, perf, purchData) {
+  const container = document.getElementById('keyMetricsDetail');
+  const stats = purchData?.stats || {};
+  const items = [
+    { label: 'BTC Avg Cost (Portfolio)', value: fmtDollar(parseDollar(dash.btcAvgCost) || parseDollar(stats['Total Portfolio Average Cost'])) },
+    { label: 'BTC Avg Purchase Price', value: fmtDollar(parseDollar(dash.btcAvgPurchasePrice) || parseDollar(stats['Average Purchase Price'])) },
+    { label: 'Inception BTC Price', value: fmtDollar(perf?.inceptionBTCPrice || INCEPTION_BTC_PRICE) },
+    { label: 'Current BTC Price', value: fmtDollar(dash.btcPrice) },
+    { label: '2.5% of AUM', value: fmtDollar(parseDollar(dash.twoPointFiveAUM)) },
+    { label: 'MWR ITD Return (Fund)', value: fmtPct(dash.mwrITDFund) },
+    { label: 'Total Capital Invested', value: fmtDollar(perf?.totalCapitalInvested) },
+    { label: 'Total P&L', value: fmtDollar(perf?.totalPnL) },
+  ];
+  container.innerHTML = items.map(i => `
+    <div class="metric-box">
+      <div class="metric-label">${i.label}</div>
+      <div class="metric-value" style="font-size:15px">${i.value}</div>
+    </div>
+  `).join('');
+}
+
+function renderAllocation(dash) {
+  const colors = { BTC: '#F7931A', WBTC: '#8B5CF6', USDC: '#22D3EE', Cash: '#94A3B8', ETH: '#627EEA' };
+  
+  // Bars
+  const barsEl = document.getElementById('allocBars');
+  barsEl.innerHTML = '';
+  dash.assets.forEach(a => {
+    const pctStr = ((a.pct || 0) * 100).toFixed(2);
+    const barWidth = Math.max(2, (a.pct || 0) * 100);
+    barsEl.innerHTML += `
+      <div class="alloc-bar-row">
+        <div class="alloc-label">${a.asset}</div>
+        <div class="alloc-bar-track">
+          <div class="alloc-bar-fill" style="width:${barWidth}%;background:${colors[a.asset] || '#4ADE80'}">
+            ${barWidth > 15 ? fmtDollar(a.aum, true) : ''}
+          </div>
+        </div>
+        <div class="alloc-pct">${pctStr}%</div>
+      </div>
+    `;
+  });
+  
+  // Table
+  const tbody = document.getElementById('allocTable');
+  tbody.innerHTML = '';
+  dash.assets.forEach(a => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${colors[a.asset] || '#4ADE80'};margin-right:6px"></span>${a.asset}</td>
+      <td>${fmtNum(a.amount, a.asset === 'USDC' || a.asset === 'Cash' ? 2 : a.amount < 1 ? 4 : 2)}</td>
+      <td>${fmtDollar(a.price)}</td>
+      <td>${fmtDollar(a.aum)}</td>
+      <td>${((a.pct || 0) * 100).toFixed(2)}%</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderVenues(dash) {
+  const tbody = document.getElementById('venueTable');
+  tbody.innerHTML = '';
+  dash.venues.forEach(v => {
+    const tr = document.createElement('tr');
+    if (v.isSummary) tr.className = 'tbl-bold';
+    tr.innerHTML = `
+      <td>${v.isSummary ? v.asset : ''}</td>
+      <td>${v.isSummary ? '' : v.venue}</td>
+      <td>${v.amount}</td>
+      <td>${v.price}</td>
+      <td>${v.value}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderPurchases(purchData, dash) {
+  // Purchase table
+  const ptbody = document.getElementById('purchaseTable');
+  ptbody.innerHTML = '';
+  purchData.purchases.forEach(p => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${p.description || p.token}</td>
+      <td>${fmtNum(p.qty, 4)}</td>
+      <td>${fmtDollar(p.basis)}</td>
+      <td>${p.fillDate || p.orderDate || ''}</td>
+      <td>${fmtDollar(p.value)}</td>
+    `;
+    ptbody.appendChild(tr);
+  });
+  
+  // Inflows table
+  const itbody = document.getElementById('inflowsTable');
+  itbody.innerHTML = '';
+  purchData.inflows.forEach(inf => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${inf.stakeholder}</td>
+      <td>${inf.person}</td>
+      <td>${inf.asset}</td>
+      <td>${inf.qty}</td>
+      <td>${inf.value}</td>
+      <td>${inf.date}</td>
+    `;
+    itbody.appendChild(tr);
+  });
+  
+  // Cost Basis Bars
+  const costEl = document.getElementById('costBars');
+  costEl.innerHTML = '';
+  const allCosts = purchData.purchases.map(p => p.basis).filter(x => x != null);
+  const maxCost = Math.max(...allCosts, dash.btcPrice || 0, INCEPTION_BTC_PRICE) * 1.05;
+  
+  // Add inception price line position
+  const inceptionPct = (INCEPTION_BTC_PRICE / maxCost) * 100;
+  const btcPricePct = ((dash.btcPrice || 0) / maxCost) * 100;
+  
+  purchData.purchases.forEach(p => {
+    if (!p.basis) return;
+    const width = (p.basis / maxCost) * 100;
+    const isAbovePrice = p.basis > (dash.btcPrice || 0);
+    costEl.innerHTML += `
+      <div class="cost-bar-row">
+        <div class="cost-bar-label">${p.description?.split(' - ')[0] || p.token}</div>
+        <div class="cost-bar-track" style="position:relative">
+          <div class="cost-bar-fill" style="width:${width}%;background:${isAbovePrice ? 'rgba(248,113,113,0.6)' : 'rgba(74,222,128,0.6)'}">
+            ${fmtDollar(p.basis)}
+          </div>
+          <div style="position:absolute;left:${btcPricePct}%;top:0;bottom:0;width:2px;background:#4ADE80;opacity:0.6"></div>
+        </div>
+      </div>
+    `;
+  });
+  
+  document.getElementById('avgCostLabel').textContent = fmtDollar(parseDollar(dash.btcAvgCost));
+  document.getElementById('btcPriceLabel').textContent = fmtDollar(dash.btcPrice);
+}
+
+function renderCommentary(dash, perf) {
+  const alpha = perf?.itdAlpha ?? dash.itdAlpha;
+  const alphaStr = alpha ? (alpha * 100).toFixed(2) : '?';
+  const el = document.getElementById('commentary');
+  el.innerHTML = `
+    The fund currently <strong>outperforms</strong> a pure BTC hold by 
+    <span class="hl-green">+${alphaStr}%</span> ITD through disciplined TWAP execution and 
+    opportunistic limit orders during drawdowns. Key alpha drivers include systematic dollar-cost averaging 
+    below inception price and aggressive limit orders during sharp drawdowns 
+    (Feb 1 at <span class="hl-orange">$78.5K</span>, Feb 5 at <span class="hl-orange">$63.1K</span>).
+    The portfolio maintains ~${((dash.assets?.find(a=>a.asset==='USDC')?.pct||0)*100).toFixed(0)}% in stablecoins/cash for deployment flexibility.
+  `;
+}
+
+// ═══════════════════════════════════════════════════════════
+// CHART RENDERING
+// ═══════════════════════════════════════════════════════════
+
+function formatDateLabel(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  if (isNaN(d)) return dateStr;
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function renderTWRChart(returnsDaily) {
+  const ctx = document.getElementById('twrChart').getContext('2d');
+  if (charts.twr) charts.twr.destroy();
+  
+  const labels = [];
+  const fundData = [];
+  const btcTWRData = [];
+  const btcPriceData = [];
+  
+  // Compute BTC TWR from price returns relative to inception price
+  for (const d of returnsDaily) {
+    labels.push(formatDateLabel(d.date));
+    fundData.push(d.cumTWR != null ? d.cumTWR : null);
+    
+    // BTC TWR = (currentPrice / inceptionPrice - 1) * 100
+    if (d.btcPrice) {
+      btcTWRData.push(((d.btcPrice / INCEPTION_BTC_PRICE) - 1) * 100);
+      btcPriceData.push(d.btcPrice);
+    } else {
+      btcTWRData.push(null);
+      btcPriceData.push(null);
+    }
+  }
+  
+  charts.twr = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Fund TWR',
+          data: fundData,
+          borderColor: '#4ADE80',
+          backgroundColor: 'rgba(74,222,128,0.05)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.3,
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          yAxisID: 'y'
+        },
+        {
+          label: 'BTC TWR',
+          data: btcTWRData,
+          borderColor: '#F7931A',
+          borderWidth: 2,
+          borderDash: [6, 3],
+          fill: false,
+          tension: 0.3,
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          yAxisID: 'y'
+        },
+        {
+          label: 'BTC Price',
+          data: btcPriceData,
+          borderColor: '#8B5CF6',
+          borderWidth: 1.5,
+          fill: false,
+          tension: 0.3,
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          yAxisID: 'y1'
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(15,23,42,0.95)',
+          titleColor: '#F1F5F9',
+          bodyColor: '#CBD5E1',
+          borderColor: 'rgba(148,163,184,0.2)',
+          borderWidth: 1,
+          padding: 12,
+          titleFont: { family: "'JetBrains Mono', monospace", size: 11 },
+          bodyFont: { family: "'JetBrains Mono', monospace", size: 11 },
+          callbacks: {
+            label: function(ctx) {
+              if (ctx.datasetIndex === 2) return `BTC Price: $${ctx.raw?.toLocaleString()}`;
+              return `${ctx.dataset.label}: ${ctx.raw?.toFixed(2)}%`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(148,163,184,0.06)' },
+          ticks: { color: '#596882', font: { family: "'JetBrains Mono', monospace", size: 10 }, maxTicksLimit: 12 }
+        },
+        y: {
+          position: 'left',
+          grid: { color: 'rgba(148,163,184,0.06)' },
+          ticks: { color: '#596882', font: { family: "'JetBrains Mono', monospace", size: 10 }, callback: v => v + '%' }
+        },
+        y1: {
+          position: 'right',
+          grid: { display: false },
+          ticks: { color: '#8B5CF6', font: { family: "'JetBrains Mono', monospace", size: 10 }, callback: v => '$' + (v/1000).toFixed(0) + 'K' }
+        }
+      }
+    }
+  });
+}
+
+function renderDrawdownChart(returnsDaily) {
+  const ctx = document.getElementById('drawdownChart').getContext('2d');
+  if (charts.drawdown) charts.drawdown.destroy();
+  
+  const labels = [];
+  const ddData = [];
+  let peak = 1;
+  
+  for (const d of returnsDaily) {
+    labels.push(formatDateLabel(d.date));
+    const cumVal = 1 + (d.cumTWR || 0) / 100;
+    if (cumVal > peak) peak = cumVal;
+    const dd = ((cumVal - peak) / peak) * 100;
+    ddData.push(dd);
+  }
+  
+  charts.drawdown = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Drawdown',
+        data: ddData,
+        borderColor: '#F87171',
+        backgroundColor: 'rgba(248,113,113,0.1)',
+        borderWidth: 1.5,
+        fill: true,
+        tension: 0.3,
+        pointRadius: 0,
+        pointHoverRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(15,23,42,0.95)',
+          titleColor: '#F1F5F9',
+          bodyColor: '#F87171',
+          borderColor: 'rgba(248,113,113,0.2)',
+          borderWidth: 1,
+          padding: 12,
+          titleFont: { family: "'JetBrains Mono', monospace", size: 11 },
+          bodyFont: { family: "'JetBrains Mono', monospace", size: 11 },
+          callbacks: { label: ctx => `Drawdown: ${ctx.raw?.toFixed(2)}%` }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(148,163,184,0.06)' },
+          ticks: { color: '#596882', font: { family: "'JetBrains Mono', monospace", size: 10 }, maxTicksLimit: 12 }
+        },
+        y: {
+          grid: { color: 'rgba(148,163,184,0.06)' },
+          ticks: { color: '#596882', font: { family: "'JetBrains Mono', monospace", size: 10 }, callback: v => v + '%' },
+          max: 0
+        }
+      }
+    }
+  });
+}
+
+function renderHoldingsChart(returnsDaily) {
+  const ctx = document.getElementById('holdingsChart').getContext('2d');
+  if (charts.holdings) charts.holdings.destroy();
+  
+  const labels = [];
+  const holdingsData = [];
+  const avgCostData = [];
+  const priceData = [];
+  
+  // Track running avg cost from daily data
+  for (const d of returnsDaily) {
+    labels.push(formatDateLabel(d.date));
+    holdingsData.push(d.btcHoldings);
+    priceData.push(d.btcPrice);
+    // Avg cost needs to be computed - we can approximate from portfolio value / holdings
+    // For simplicity, we'll show holdings and price, and compute avg cost where possible
+  }
+  
+  charts.holdings = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'BTC Holdings',
+          data: holdingsData,
+          borderColor: '#4ADE80',
+          borderWidth: 2,
+          fill: false,
+          tension: 0.3,
+          pointRadius: 0,
+          yAxisID: 'y'
+        },
+        {
+          label: 'BTC Price',
+          data: priceData,
+          borderColor: '#8B5CF6',
+          borderWidth: 1.5,
+          fill: false,
+          tension: 0.3,
+          pointRadius: 0,
+          yAxisID: 'y1'
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(15,23,42,0.95)',
+          titleColor: '#F1F5F9',
+          bodyColor: '#CBD5E1',
+          borderColor: 'rgba(148,163,184,0.2)',
+          borderWidth: 1,
+          padding: 12,
+          titleFont: { family: "'JetBrains Mono', monospace", size: 11 },
+          bodyFont: { family: "'JetBrains Mono', monospace", size: 11 },
+          callbacks: {
+            label: function(ctx) {
+              if (ctx.datasetIndex === 0) return `Holdings: ${ctx.raw?.toFixed(2)} BTC`;
+              return `BTC Price: $${ctx.raw?.toLocaleString()}`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(148,163,184,0.06)' },
+          ticks: { color: '#596882', font: { family: "'JetBrains Mono', monospace", size: 10 }, maxTicksLimit: 12 }
+        },
+        y: {
+          position: 'left',
+          grid: { color: 'rgba(148,163,184,0.06)' },
+          ticks: { color: '#4ADE80', font: { family: "'JetBrains Mono', monospace", size: 10 }, callback: v => v.toFixed(0) + ' BTC' }
+        },
+        y1: {
+          position: 'right',
+          grid: { display: false },
+          ticks: { color: '#8B5CF6', font: { family: "'JetBrains Mono', monospace", size: 10 }, callback: v => '$' + (v/1000).toFixed(0) + 'K' }
+        }
+      }
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+// TABS
+// ═══════════════════════════════════════════════════════════
+
+document.getElementById('tabBar').addEventListener('click', e => {
+  const btn = e.target.closest('.tab-btn');
+  if (!btn) return;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById('tab-' + btn.dataset.tab)?.classList.add('active');
+});
+
+// ═══════════════════════════════════════════════════════════
+// MAIN DATA LOADING
+// ═══════════════════════════════════════════════════════════
+
+async function loadAllData() {
+  try {
+    const [dashRows, perfRows, returnsRows, purchRows] = await Promise.all([
+      fetchCSV(TABS.dashboard),
+      fetchCSV(TABS.perfSummary),
+      fetchCSV(TABS.returnsDaily),
+      fetchCSV(TABS.purchases)
+    ]);
+    
+    const dash = parseDashboard(dashRows);
+    const perf = parsePerfSummary(perfRows);
+    const returnsDaily = parseReturnsDaily(returnsRows);
+    const purchData = parsePurchases(purchRows);
+    
+    lastGoodData = { dash, perf, returnsDaily, purchData };
+    
+    // Render everything
+    renderHero(dash, perf);
+    renderMetrics(dash, perf, returnsDaily);
+    renderITDQTD(dash, perf);
+    renderMWR(dash);
+    renderBTCTWR(dash);
+    renderKeyMetrics(dash, perf, purchData);
+    renderAllocation(dash);
+    renderVenues(dash);
+    renderPurchases(purchData, dash);
+    renderCommentary(dash, perf);
+    renderTWRChart(returnsDaily);
+    renderDrawdownChart(returnsDaily);
+    renderHoldingsChart(returnsDaily);
+    
+    // Update timestamp
+    const now = new Date();
+    document.getElementById('lastUpdate').textContent = `Updated ${now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+    
+    // Hide error
+    document.getElementById('errorBanner').style.display = 'none';
+    
+  } catch (err) {
+    console.error('Data fetch error:', err);
+    const banner = document.getElementById('errorBanner');
+    banner.textContent = `⚠ Data refresh failed: ${err.message}. Showing last good data. Retrying in 60s...`;
+    banner.style.display = 'block';
+    
+    // If we have old data, keep showing it (don't break the page)
+    if (!lastGoodData) {
+      document.getElementById('lastUpdate').textContent = 'Failed to load — retrying...';
+    }
+  }
+  
+  // Hide loading overlay
+  document.getElementById('loadingOverlay').classList.add('hidden');
+}
+
+// ═══════════════════════════════════════════════════════════
+// INIT & AUTO-REFRESH
+// ═══════════════════════════════════════════════════════════
+
+// Initial load with 15s delay to let sheet formulas compute
+async function init() {
+  await loadAllData();
+  
+  // Sync refresh to top of each minute (:00)
+  // Apps Script fires at :43, finishes ~:53, so :00 gives 7s buffer
+  function secsUntilTop() {
+    var sec = new Date().getSeconds();
+    return sec === 0 ? 60 : 60 - sec;
+  }
+
+  function scheduleNext() {
+    var wait = secsUntilTop();
+    var cd = document.getElementById('countdown');
+    var remaining = wait;
+    cd.textContent = remaining + 's';
+    var tick = setInterval(function() {
+      remaining--;
+      if (remaining <= 0) {
+        clearInterval(tick);
+        cd.textContent = 'updating…';
+        loadAllData().then(function() { scheduleNext(); }).catch(function() { scheduleNext(); });
+      } else {
+        cd.textContent = remaining + 's';
+      }
+    }, 1000);
+  }
+  scheduleNext();
+}
+
+init();
+</script>
+</body>
+</html>
